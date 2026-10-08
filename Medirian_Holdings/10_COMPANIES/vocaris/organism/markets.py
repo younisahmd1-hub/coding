@@ -28,6 +28,7 @@ class Market:
     targets: dict = field(default_factory=dict)
     product_gaps: list[str] = field(default_factory=list)
     require_verified_demo: bool = True
+    daily_total_cap: int = 5          # house rule: max 5 messages a day, all channels
     timezone: str = "Etc/UTC"
     dialect: str | None = None
 

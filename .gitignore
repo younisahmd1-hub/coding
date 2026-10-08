@@ -3,3 +3,5 @@ __pycache__/
 .env
 Medirian_Holdings/10_COMPANIES/vocaris/data/*
 !Medirian_Holdings/10_COMPANIES/vocaris/data/.gitkeep
+Medirian_Holdings/10_COMPANIES/vocaris/outbox/*
+!Medirian_Holdings/10_COMPANIES/vocaris/outbox/.gitkeep

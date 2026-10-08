@@ -9,7 +9,8 @@
     python -m organism.cli set-demo <lead_id> <slug>  # use the slug the Vocaris backend created
     python -m organism.cli verify-links --market dubai # only live demo pages may be sent
     python -m organism.cli top     --market dubai -n 20
-    python -m organism.cli outreach --market dubai --channel call_list [--live]
+    python -m organism.cli mark-tested <lead_id>       # after YOU called the demo and it held up
+    python -m organism.cli outreach --market dubai --channel linkedin   # drafts to outbox/, never sends
     python -m organism.cli record <lead_id> <event> [--channel email] [--cost 0]
     python -m organism.cli optout <phone_or_email>
     python -m organism.cli allocate --capacity 100
@@ -63,10 +64,11 @@ def main(argv=None) -> None:
     s.add_argument("-n", type=int, default=20)
     s = sub.add_parser("outreach")
     s.add_argument("--market", required=True)
-    s.add_argument("--channel", required=True, choices=["email", "whatsapp", "call_list"])
-    s.add_argument("--limit", type=int, default=20)
+    s.add_argument("--channel", required=True, choices=outreach.CHANNELS)
+    s.add_argument("--limit", type=int, default=5)
     s.add_argument("--min-score", type=float, default=0)
-    s.add_argument("--live", action="store_true", help="actually send (default is dry run)")
+    s = sub.add_parser("mark-tested", help="you called the demo yourself and it held up")
+    s.add_argument("lead_id")
     s = sub.add_parser("record")
     s.add_argument("lead_id")
     s.add_argument("event", choices=["contacted", "replied", "demo_called", "trial", "paid", "lost",
@@ -136,11 +138,17 @@ def main(argv=None) -> None:
             print(f"{r['score'] or 0:6.1f}  {r['name'][:38]:38}  {r['segment'] or '':12} {r['district'] or '':15} "
                   f"{r['phone'] or '-':16} {r['stage']}")
     elif a.cmd == "outreach":
-        res = outreach.run(_market(markets, a.market), a.channel, mem, a.limit, a.live, a.min_score)
+        res = outreach.run(_market(markets, a.market), a.channel, mem, a.limit, a.min_score)
         for name, status, why in res["items"]:
             print(f"  {status:10} {name[:40]:40} {why}")
-        print(f"{'LIVE' if a.live else 'DRY RUN'}: {res['sent']} ok, {res['blocked']} blocked"
-              + (f" -> {res['file']}" if res["file"] else ""))
+        print(f"{res['drafted']} drafts in outbox/ (nothing sent), {res['blocked']} blocked")
+        for f in res["files"]:
+            print(f"    {f}")
+    elif a.cmd == "mark-tested":
+        if not mem.lead(a.lead_id):
+            sys.exit(f"no lead {a.lead_id}")
+        mem.update_lead(a.lead_id, call_tested=1)
+        print("marked as call-tested")
     elif a.cmd == "record":
         lead = mem.lead(a.lead_id)
         if not lead:

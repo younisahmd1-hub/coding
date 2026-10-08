@@ -14,52 +14,66 @@ from ..markets import Market
 
 API_BASE = os.environ.get("VOCARIS_API_BASE", "https://api.vocaris.ai/v4/p-ebc232c6/voxibook/api/v1")
 
+# House rules (CLAUDE.md): no absolute claims ("every call answered", "guaranteed", "100%"), no invented numbers,
+# one dialect per message (Gulf for the Gulf), lead angle = "the call you'll never know you lost".
 TEMPLATES = {
     "en": {
-        "email_subject": "{name}: we set up your AI receptionist (free)",
+        "email_subject": "{name}: your AI receptionist is ready — try it yourself",
         "email_body": (
             "Hi {name} team,\n\n"
-            "When you're busy with a client, calls to your salon go unanswered — and most callers book "
-            "somewhere else instead of calling back.\n\n"
-            "We've already built a Vocaris receptionist trained on {name}. It answers every call 24/7 "
-            "and books straight into your calendar.\n\n"
-            "Your page is ready, no forms and no card: {demo_link}\n\n"
+            "A caller who doesn't get an answer rarely leaves a message — they call the next place. "
+            "That's a booking you'll never know you lost.\n\n"
+            "We've set up a Vocaris receptionist trained on {name}. It answers your phone 24/7 and books "
+            "appointments directly.\n\n"
+            "Call it now and hear it yourself: {demo_link}\n\n"
             "Offer: {trial}.\n\n"
-            "— Vocaris\n\n"
-            "Not interested? Reply STOP and we won't contact you again."
+            "— Ahmad, Vocaris\n\n"
+            "Not for you? Reply \"no\" and we won't write again."
+        ),
+        "linkedin": (
+            "Hi — I came across {name} and set up an AI receptionist trained on your business. It answers the "
+            "phone and books appointments. Call it and hear it: {demo_link} ({trial}). If it's not for you, "
+            "just say so and I won't message again."
         ),
         "whatsapp": (
-            "Hi {name} 👋 We built an AI receptionist trained on {name} — it answers every call 24/7 and books "
-            "into your calendar. Try it here: {demo_link} ({trial}). Reply STOP to opt out."
+            "Hi {name} 👋 We set up an AI receptionist trained on {name} — it answers your phone and books "
+            "appointments. Call it here: {demo_link} ({trial}). Reply \"no\" to stop messages."
         ),
         "call_script": (
-            "Hi, is this {name}? I'm calling from Vocaris. Quick question — when you're with a client and the "
-            "phone rings, who answers it? [listen] We've already built an AI receptionist set up for {name}; "
-            "it answers 24/7 and books into your calendar. Can I send you the link on WhatsApp? It's {trial}."
+            "Hi, is this {name}? This is Ahmad from Vocaris. Quick question — when you're busy with a client "
+            "and the phone rings, who picks up? [listen] We've set up an AI receptionist for {name} that answers "
+            "the phone and books appointments. Can I send you the link so you can call it yourself? {trial}."
         ),
     },
     "ar": {
-        "email_subject": "{name}: جهّزنا لكم موظف استقبال ذكي (مجاناً)",
+        "email_subject": "{name}: موظف استقبال جاهز باسمكم — جرّبوه بنفسكم",
         "email_body": (
-            "مرحباً فريق {name}،\n\n"
-            "لما تكونون مشغولين مع زبون، المكالمات تضيع — وأغلب المتصلين يحجزون عند غيركم بدل ما يعيدون الاتصال.\n\n"
-            "جهّزنا لكم موظف استقبال Vocaris مدرَّب على {name}. يرد على كل مكالمة ٢٤/٧ "
-            "ويحجز مباشرة في التقويم.\n\n"
-            "صفحتكم جاهزة، بدون نماذج وبدون بطاقة: {demo_link}\n\n"
+            "هلا فريق {name}،\n\n"
+            "الزبون اللي يتصل وما أحد يرد عليه، ما يترك رسالة — يتصل على اللي بعدكم. "
+            "وهذي مكالمة ما راح تدرون أبد إنكم خسرتوها.\n\n"
+            "جهّزنا موظف استقبال من Vocaris باسم {name}: يرد على تلفون المحل ٢٤ ساعة ويحجز المواعيد مباشرة.\n\n"
+            "اتصلوا عليه الحين واسمعوه بنفسكم: {demo_link}\n\n"
             "العرض: {trial}.\n\n"
-            "— Vocaris\n\n"
-            "ما يهمكم؟ ردّوا بكلمة STOP وما راح نتواصل معكم مرة ثانية."
+            "— أحمد، Vocaris\n\n"
+            "إذا ما يناسبكم، ردّوا بكلمة «لا» وما راح نراسلكم مرة ثانية."
+        ),
+        "linkedin": (
+            "هلا، شفت {name} وجهّزت لكم موظف استقبال بالذكاء الاصطناعي باسم المحل — يرد على التلفون ويحجز "
+            "المواعيد. اتصلوا عليه واسمعوه: {demo_link} ({trial}). إذا ما يهمكم، قولوا لي وما أراسلكم مرة ثانية."
         ),
         "whatsapp": (
-            "هلا {name} 👋 موظف الاستقبال الذكي من Vocaris جاهز لكم — يرد على كل مكالمة ٢٤/٧ ويحجز في التقويم. "
-            "شوفوه هنا: {demo_link} ({trial}). للإلغاء أرسلوا STOP."
+            "هلا {name} 👋 جهّزنا لكم موظف استقبال باسم المحل يرد على التلفون ويحجز المواعيد. "
+            "اتصلوا عليه هني: {demo_link} ({trial}). إذا ما تبون رسايل، ردّوا بـ«لا»."
         ),
         "call_script": (
-            "مرحبا، معي {name}؟ أنا من Vocaris. سؤال سريع — لما تكون مع زبون والتلفون يرن، مين يرد؟ [استمع] "
-            "جهّزنا موظف استقبال ذكي خاص فيكم يرد ٢٤/٧ ويحجز في التقويم. أقدر أرسل لك الرابط على واتساب؟ {trial}."
+            "السلام عليكم، معي {name}؟ معك أحمد من Vocaris. سؤال سريع: يوم تكونون مشغولين مع زبون والتلفون "
+            "يرن، منو يرد؟ [اسمع] جهّزنا لكم موظف استقبال باسم {name} يرد على التلفون ويحجز المواعيد. "
+            "أقدر أرسل لكم الرابط تتصلون عليه وتسمعونه بنفسكم؟ {trial}."
         ),
     },
 }
+
+BANNED_PHRASES = ["every call", "100%", "guarantee", "كل مكالمة", "كل المكالمات", "مضمون", "١٠٠٪"]
 
 
 def slugify(name: str, suffix: str = "") -> str:
@@ -72,10 +86,19 @@ def personalize(lead: dict, market: Market) -> dict:
     suffix = lead["id"].split(":")[-1][-6:].lower()
     slug = slugify(lead["name"], suffix)
     demo_link = market.demo_link_template.format(slug=slug, market=market.id)
-    ctx = {"name": lead["name"], "demo_link": demo_link, "trial": market.offer.get("trial", "free trial")}
-    copy = {lang: {k: v.format(**ctx) for k, v in TEMPLATES[lang].items()}
-            for lang in market.languages if lang in TEMPLATES}
+    copy = {}
+    for lang in market.languages:
+        if lang not in TEMPLATES:
+            continue
+        trial = market.offer.get(f"trial_{lang}") or market.offer.get("trial", "")
+        ctx = {"name": lead["name"], "demo_link": demo_link, "trial": trial}
+        copy[lang] = {k: v.format(**ctx) for k, v in TEMPLATES[lang].items()}
     return {"slug": slug, "demo_link": demo_link, "copy": copy}
+
+
+def banned_phrases(text: str) -> list[str]:
+    low = text.lower()
+    return [p for p in BANNED_PHRASES if p.lower() in low]
 
 
 def demo_page_live(slug: str, session=requests) -> bool:

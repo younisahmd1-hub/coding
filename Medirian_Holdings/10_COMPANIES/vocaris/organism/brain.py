@@ -11,7 +11,7 @@ import random
 from .markets import Market
 
 FUNNEL = ["contacted", "replied", "demo_called", "trial", "paid"]
-OUTREACH_CHANNELS = ["email", "whatsapp", "call_list"]
+OUTREACH_CHANNELS = ["linkedin", "email", "whatsapp", "call_list"]
 
 
 def funnel(market: Market, memory) -> dict:
@@ -91,6 +91,10 @@ def diagnose(market: Market, memory) -> list[str]:
     if unverified and market.require_verified_demo:
         notes.append(f"{unverified} demo links not live yet — create them in the Vocaris outreach pipeline "
                      "(`set-demo` to map the real slug), then `verify-links`.")
+    untested = memory.db.execute("SELECT COUNT(*) FROM leads WHERE market=? AND demo_verified=1 "
+                                 "AND call_tested=0", (market.id,)).fetchone()[0]
+    if untested:
+        notes.append(f"{untested} live demos not call-tested — call each one yourself, then `mark-tested`.")
     for gap in market.product_gaps:
         notes.append(f"Product gap: {gap}")
     return notes or ["Healthy — keep feeding the winning arms."]

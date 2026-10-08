@@ -39,8 +39,9 @@ python3 -m organism.cli score --market dubai
 python3 -m organism.cli top --market dubai -n 30
 python3 -m organism.cli personalize --market dubai
 python3 -m organism.cli verify-links --market dubai   # only demo pages that exist may be sent
-python3 -m organism.cli outreach --market dubai --channel call_list   # CSV + script for a human caller
-python3 -m organism.cli outreach --market dubai --channel email       # dry run; add --live to send
+python3 -m organism.cli mark-tested gplaces:XYZ       # only after YOU called the demo and it held up
+python3 -m organism.cli outreach --market dubai --channel linkedin    # writes drafts to outbox/ — never sends
+python3 -m organism.cli record gplaces:XYZ contacted --channel linkedin   # after Ahmad sends it by hand
 python3 -m organism.cli record gplaces:XYZ trial
 python3 -m organism.cli allocate --capacity 100
 python3 -m organism.cli kill on --reason "pause everything"
@@ -53,9 +54,18 @@ Tests: `python3 -m unittest discover -s tests -t .`
 2. Fill in districts, segments, languages and channel rules. Check that country's B2B outreach law before setting `cold_allowed: true`.
 3. Set `status: active`. The brain includes it automatically.
 
+## House rules enforced in code (from `CLAUDE.md`)
+- **Nothing is ever sent.** Outreach writes drafts to `outbox/<market>/<date>/`; Ahmad sends by hand.
+- **Max 5 drafts a day** across all channels.
+- **5 touches over 14 days** (days 0 · 3 · 7 · 11 · 14), then 90-day archive; from touch 4 the draft says "change the angle".
+- **No draft before the demo is live AND call-tested** by Ahmad (`verify-links` + `mark-tested`).
+- **No absolute claims** ("every call", "guaranteed", "100%") — templates are scanned before each draft.
+- Once a lead replies, the sequence stops: Ahmad handles it personally.
+
 ## Channel rules built in
 | Channel | Rule |
 |---|---|
+| LinkedIn | Primary channel. Drafted for a personal DM. |
 | WhatsApp | Only to leads who opted in, for example by messaging you from an ad. Meta bans numbers that start conversations with strangers. |
 | Email | Only generic business inboxes (info@, booking@), always with a STOP option, under a daily warm-up cap. |
 | Call list | Only inside business hours in the market's timezone. A human dials, then records the outcome. |

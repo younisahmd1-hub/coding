@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS leads (
     slug TEXT,
     demo_link TEXT,
     demo_verified INTEGER DEFAULT 0,    -- 1 once the demo page returned 200
+    call_tested INTEGER DEFAULT 0,      -- 1 once Ahmad called the demo himself and it held up
     whatsapp_opt_in INTEGER DEFAULT 0,
     stage TEXT DEFAULT 'found',     -- found > scored > contacted > replied > demo_called > trial > paid | lost
     created_at REAL,
@@ -38,7 +39,7 @@ CREATE TABLE IF NOT EXISTS events (
     lead_id TEXT,
     market TEXT NOT NULL,
     channel TEXT,
-    type TEXT NOT NULL,             -- contacted | replied | demo_called | trial | paid | lost | ad_spend
+    type TEXT NOT NULL,             -- drafted | contacted | replied | demo_called | trial | paid | lost | ad_spend
     cost_usd REAL DEFAULT 0,
     meta TEXT,
     ts REAL NOT NULL

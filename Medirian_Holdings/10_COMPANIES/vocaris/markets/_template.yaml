@@ -18,9 +18,11 @@ scoring:
   booking_platforms_bonus: [fresha, booksy]
 demo_link_template: "https://vocaris.ai/demo/{slug}"
 require_verified_demo: true
-offer: {trial: "30 days free, no card"}
+daily_total_cap: 5          # house rule: max 5 messages/day across all channels
+offer: {trial: "1 month free, no card"}
 telephony: {path: undecided, notes: ""}
 channels:
+  linkedin: {enabled: true, cold_allowed: true}
   email: {enabled: true, cold_allowed: false, daily_cap: 20}     # check local B2B email law first
   whatsapp: {enabled: true, cold_allowed: false, daily_cap: 100}
   call_list: {enabled: true, cold_allowed: false, daily_cap: 30, call_hours: [10, 18]}

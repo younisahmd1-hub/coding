@@ -41,7 +41,7 @@ class OrganismTest(unittest.TestCase):
         self.dubai = self.markets["dubai"]
         self.ks = mock.patch.object(immune, "KILL_SWITCH", Path(self.tmp.name) / "KILL")
         self.ks.start()
-        self.dd = mock.patch.object(outreach, "DATA_DIR", Path(self.tmp.name))
+        self.dd = mock.patch.object(outreach, "OUTBOX", Path(self.tmp.name) / "outbox")
         self.dd.start()
 
     def tearDown(self):
@@ -88,8 +88,8 @@ class OrganismTest(unittest.TestCase):
         p = personalize.personalize({"id": "gplaces:abc123", "name": "Fade Kings Barber"}, self.dubai)
         self.assertEqual(p["slug"], "fade-kings-barber-abc123")
         self.assertIn(p["demo_link"], p["copy"]["en"]["email_body"])
-        self.assertIn(p["demo_link"], p["copy"]["ar"]["whatsapp"])
-        self.assertIn("STOP", p["copy"]["en"]["email_body"])
+        self.assertIn(p["demo_link"], p["copy"]["ar"]["linkedin"])
+        self.assertIn("«لا»", p["copy"]["ar"]["email_body"])
 
     def test_immune_blocks(self):
         self.seed()
@@ -97,13 +97,15 @@ class OrganismTest(unittest.TestCase):
         lead = dict(self.mem.lead("gplaces:a"))
         self.assertIn("verify-links", immune.check(lead, self.dubai, "whatsapp", self.mem).reason)
         lead["demo_verified"] = 1
+        self.assertIn("mark-tested", immune.check(lead, self.dubai, "whatsapp", self.mem).reason)
+        lead["call_tested"] = 1
         # cold whatsapp is blocked without opt-in
         self.assertFalse(immune.check(lead, self.dubai, "whatsapp", self.mem))
         lead["whatsapp_opt_in"] = 1
         self.assertTrue(immune.check(lead, self.dubai, "whatsapp", self.mem))
-        # opt-out wins over everything
+        # opt-out wins over everything, on any channel
         self.mem.suppress("+971 4 123 4567")
-        self.assertIn("opted out", immune.check(lead, self.dubai, "whatsapp", self.mem).reason)
+        self.assertIn("not to be contacted", immune.check(lead, self.dubai, "linkedin", self.mem).reason)
         # kill switch
         immune.set_kill_switch(True)
         self.assertIn("kill", immune.check(lead, self.dubai, "whatsapp", self.mem).reason)
@@ -111,16 +113,41 @@ class OrganismTest(unittest.TestCase):
         # inactive market
         self.assertFalse(immune.check(lead, self.markets["riyadh"], "email", self.mem))
 
-    def test_immune_call_hours_and_cooldown(self):
+    def test_cadence_five_touches_then_archive(self):
         self.seed()
-        lead = dict(self.mem.lead("gplaces:a"), demo_verified=1)
+        lead = dict(self.mem.lead("gplaces:a"), demo_verified=1, call_tested=1)
+        t0 = 1_760_000_000
+        day = 86400
+        for n, d in enumerate([0, 3, 7, 11, 14]):
+            if n:
+                self.assertIn("not due", immune.check(lead, self.dubai, "linkedin", self.mem, now=t0 + (d - 1) * day).reason)
+            self.assertTrue(immune.check(lead, self.dubai, "linkedin", self.mem, now=t0 + d * day))
+            self.mem.record("dubai", "contacted", lead_id=lead["id"], channel="linkedin", ts=t0 + d * day)
+        self.assertIn("archived", immune.check(lead, self.dubai, "linkedin", self.mem, now=t0 + 30 * day).reason)
+        self.assertTrue(immune.check(lead, self.dubai, "linkedin", self.mem, now=t0 + 105 * day))
+        # once they reply, Ahmad handles it personally
+        self.mem.record("dubai", "replied", lead_id=lead["id"])
+        lead["stage"] = "replied"
+        self.assertIn("personally", immune.check(lead, self.dubai, "linkedin", self.mem, now=t0 + 105 * day).reason)
+
+    def test_daily_cap_five_across_channels(self):
+        now = 1_760_000_000
+        for i in range(7):
+            self.mem.upsert_lead({"id": f"x{i}", "market": "dubai", "name": f"x{i}", "phone": f"+9715000{i}"})
+            self.mem.update_lead(f"x{i}", demo_verified=1, call_tested=1, demo_link="https://vocaris.ai/demo/x", score=1)
+        res = outreach.run(self.dubai, "linkedin", self.mem, limit=10, now=now)
+        self.assertEqual(res["drafted"], 5)
+        self.assertIn("daily limit 5", res["items"][-1][2])
+        self.assertEqual(outreach.run(self.dubai, "call_list", self.mem, limit=10, now=now + 60)["drafted"], 0)
+
+    def test_call_hours(self):
+        self.seed()
+        lead = dict(self.mem.lead("gplaces:a"), demo_verified=1, call_tested=1)
         noon_dubai = 1_760_000_000 - (1_760_000_000 % 86400) + 8 * 3600   # 08:00 UTC = 12:00 Dubai
         self.assertTrue(immune.check(lead, self.dubai, "call_list", self.mem, now=noon_dubai))
         self.assertFalse(immune.check(lead, self.dubai, "call_list", self.mem, now=noon_dubai + 10 * 3600))
-        self.mem.record("dubai", "contacted", lead_id=lead["id"], channel="call_list", ts=noon_dubai - 3600)
-        self.assertIn("7 days", immune.check(lead, self.dubai, "call_list", self.mem, now=noon_dubai).reason)
 
-    def test_outreach_dry_run_sends_nothing_and_writes_call_list(self):
+    def test_outreach_only_drafts_tested_live_demos(self):
         self.seed()
         scoring.score_market(self.dubai, self.mem)
         personalize.personalize_market(self.dubai, self.mem)
@@ -129,16 +156,20 @@ class OrganismTest(unittest.TestCase):
             def get(self, url, timeout):
                 return type("R", (), {"status_code": 200 if url.rsplit("/", 1)[1] in live else 404})()
         self.assertEqual(personalize.verify_market(self.dubai, self.mem, S()), {"checked": 3, "live": 1})
-        with mock.patch.object(outreach, "_send_email") as send, \
-                mock.patch.object(immune, "datetime") as dt:
-            dt.fromtimestamp.return_value.hour = 12
-            res = outreach.run(self.dubai, "call_list", self.mem, limit=5)
-            outreach.run(self.dubai, "email", self.mem, limit=5)
-            send.assert_not_called()
-        self.assertTrue(res["dry_run"])
-        self.assertEqual([i[0] for i in res["items"] if i[1] == "WOULD SEND"], ["Fade Kings Barber"])
-        self.assertEqual(self.mem.count_events("dubai", "contacted"), 0)
-        self.assertTrue(res["file"].endswith("call_list_dubai.csv"))
+        self.assertEqual(outreach.run(self.dubai, "linkedin", self.mem)["drafted"], 0)   # not call-tested yet
+        self.mem.update_lead("gplaces:a", call_tested=1)
+        res = outreach.run(self.dubai, "linkedin", self.mem)
+        self.assertEqual([i[0] for i in res["items"] if i[1] == "DRAFTED"], ["Fade Kings Barber"])
+        draft = Path(res["files"][0]).read_text()
+        self.assertIn("https://vocaris.ai/demo/fade-kings-barber-a", draft)
+        self.assertIn("شهر مجاني، بدون بطاقة", draft)          # Arabic first for Dubai
+        self.assertEqual(self.mem.count_events("dubai", "contacted"), 0)   # drafting is not sending
+
+    def test_templates_have_no_banned_claims(self):
+        for lang, tpl in personalize.TEMPLATES.items():
+            for key, text in tpl.items():
+                self.assertEqual(personalize.banned_phrases(text), [], (lang, key))
+        self.assertTrue(personalize.banned_phrases("We answer every call, guaranteed"))
 
     def test_stage_moves_forward_only(self):
         self.seed()

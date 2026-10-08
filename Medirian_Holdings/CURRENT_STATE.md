@@ -1,23 +1,27 @@
 # CURRENT STATE — Medirian Holdings
 
-_Last updated: 2026-10-08_
+_Last updated: 2026-10-09_
+
+## Read first for Vocaris
+`10_COMPANIES/vocaris/CLAUDE.md` (house rules, in Arabic) → `VOCARIS_MASTER_KNOWLEDGE.md` → `PROGRESS_LOG.md`.
+All outputs to Ahmad are in Arabic and end with: what was done · decision needed · next step.
 
 ## Active focus
-**Vocaris worldwide growth organism**, at `10_COMPANIES/vocaris/`. Version 0.1 is built and its 11 tests pass. It has not been given real leads yet.
+**Vocaris worldwide growth organism**, at `10_COMPANIES/vocaris/`. Version 0.2 follows the house rules in CLAUDE.md (drafts only, 5 a day, call-tested demos); 14 tests pass. It has not been given real leads yet.
 
 ## Status by market
 | Market | Status | Leads | Paid | Target |
 |---|---|---|---|---|
-| Dubai | active | 0 | 0 | 100 paying by month 3 |
+| Dubai | active (first market NOT yet confirmed by Ahmad) | 0 | 0 | 1 real customer who forwarded their phone |
 | Riyadh | planned (months 7–9) | 0 | 0 | — |
 
 ## Blockers, most urgent first
 1. **SECURITY (critical):** the live vocaris.ai JavaScript exposes the production database password. The technical partner must rotate the Neon password and move secrets to the server. See RT-13.
 2. **No leads yet.** Run `source` once a `GOOGLE_PLACES_API_KEY` is set, or import a CSV.
-3. **Demo links:** personal demo pages (`vocaris.ai/demo/<slug>`) are created by the Vocaris backend pipeline. The organism only sends links that have been checked and confirmed live.
+3. **Demo links:** personal demo pages (`vocaris.ai/demo/<slug>`) are created by the Vocaris backend pipeline. Drafts only include links that are live AND that Ahmad has called himself.
 4. **Product gaps for the UAE:** no Arabic agent language, no WhatsApp, no Fresha, prices in USD only.
 5. **Telephony path not decided:** A = IFZA free-zone company with local numbers (about $3.5–4.7k); B = WhatsApp-only through the US company.
-6. Outreach credentials (SMTP, WhatsApp Cloud API) are not configured, so every send is a dry run.
+6. Outreach is drafts-only by design: Ahmad sends every message by hand.
 
 ## Next actions
 - [ ] Partner: rotate the database credential.

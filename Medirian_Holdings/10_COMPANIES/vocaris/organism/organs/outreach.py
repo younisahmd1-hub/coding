@@ -1,102 +1,70 @@
-"""Outreach organ: delivers personalized messages through each channel, only after the immune system says yes.
+"""Outreach organ: writes ready-to-send drafts to outbox/. It never sends anything.
 
-Everything runs in DRY RUN unless `live=True` and the channel's credentials are configured.
-  * email     — SMTP (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM)
-  * whatsapp  — WhatsApp Cloud API approved template (WA_TOKEN, WA_PHONE_NUMBER_ID, WA_TEMPLATE)
-  * call_list — writes a CSV for a human caller with the script per lead
+House rule (CLAUDE.md #3): drafts go to outbox/; Ahmad presses send himself. After sending, record it with
+`record <lead_id> contacted --channel <channel>` so the sequence and the brain can learn.
+
+Channels: linkedin (DM), email, whatsapp (opt-in only), call_list (script for a phone call).
 """
 from __future__ import annotations
 
-import csv
-import os
-import smtplib
-from email.message import EmailMessage
-from pathlib import Path
+import time
+from datetime import datetime
 
-import requests
-
-from .. import DATA_DIR, immune
+from .. import ROOT, immune
 from ..markets import Market
-from .personalize import personalize
+from .personalize import banned_phrases, personalize
+
+OUTBOX = ROOT / "outbox"
+CHANNELS = ["linkedin", "email", "whatsapp", "call_list"]
+FIELDS = {"linkedin": ["linkedin"], "email": ["email_subject", "email_body"],
+          "whatsapp": ["whatsapp"], "call_list": ["call_script"]}
 
 
-def _send_email(to: str, subject: str, body: str) -> None:
-    msg = EmailMessage()
-    msg["From"] = os.environ["SMTP_FROM"]
-    msg["To"] = to
-    msg["Subject"] = subject
-    msg["List-Unsubscribe"] = f"<mailto:{os.environ['SMTP_FROM']}?subject=STOP>"
-    msg.set_content(body)
-    with smtplib.SMTP(os.environ["SMTP_HOST"], int(os.environ.get("SMTP_PORT", 587))) as s:
-        s.starttls()
-        s.login(os.environ["SMTP_USER"], os.environ["SMTP_PASSWORD"])
-        s.send_message(msg)
-
-
-def _send_whatsapp(phone: str, name: str, demo_link: str) -> None:
-    # Business-initiated WhatsApp must use a Meta-approved template; params: {{1}} name, {{2}} link.
-    url = f"https://graph.facebook.com/v21.0/{os.environ['WA_PHONE_NUMBER_ID']}/messages"
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": "".join(ch for ch in phone if ch.isdigit()),
-        "type": "template",
-        "template": {
-            "name": os.environ["WA_TEMPLATE"],
-            "language": {"code": os.environ.get("WA_TEMPLATE_LANG", "en")},
-            "components": [{"type": "body", "parameters": [
-                {"type": "text", "text": name}, {"type": "text", "text": demo_link}]}],
-        },
-    }
-    r = requests.post(url, json=payload, headers={"Authorization": f"Bearer {os.environ['WA_TOKEN']}"}, timeout=30)
-    r.raise_for_status()
-
-
-def run(market: Market, channel: str, memory, limit: int = 20, live: bool = False,
-        min_score: float = 0) -> dict:
-    """Contact the best-scored eligible leads on one channel. Returns a summary with per-lead verdicts."""
-    results = {"sent": 0, "blocked": 0, "dry_run": not live, "items": [], "file": None}
-    call_rows = []
+def run(market: Market, channel: str, memory, limit: int = 5, min_score: float = 0,
+        now: float | None = None) -> dict:
+    """Draft messages for the best eligible leads on one channel. Returns a summary with per-lead verdicts."""
+    if channel not in CHANNELS:
+        raise ValueError(f"unknown channel {channel}")
+    now = now or time.time()
+    results = {"drafted": 0, "blocked": 0, "items": [], "files": []}
     lang = market.languages[0]
+    day_dir = OUTBOX / market.id / datetime.fromtimestamp(now).strftime("%Y-%m-%d")
 
     for row in memory.leads(market=market.id, order_by_score=True):
-        if results["sent"] >= limit:
+        if results["drafted"] >= limit:
             break
         lead = dict(row)
         if (lead["score"] or 0) < min_score or not lead["demo_link"]:
             continue
-        verdict = immune.check(lead, market, channel, memory)
+        verdict = immune.check(lead, market, channel, memory, now=now)
         if not verdict:
             results["blocked"] += 1
             results["items"].append((lead["name"], "BLOCKED", verdict.reason))
             continue
 
         copy = personalize(lead, market)["copy"][lang]
-        if channel == "email":
-            if live:
-                _send_email(lead["email"], copy["email_subject"], copy["email_body"])
-        elif channel == "whatsapp":
-            if live:
-                _send_whatsapp(lead["phone"], lead["name"], lead["demo_link"])
-        elif channel == "call_list":
-            call_rows.append({"name": lead["name"], "phone": lead["phone"], "district": lead["district"],
-                              "score": lead["score"], "why": lead["score_reasons"],
-                              "demo_link": lead["demo_link"], "script": copy["call_script"]})
-        else:
-            raise ValueError(f"unknown channel {channel}")
+        text = "\n\n".join(copy[f] for f in FIELDS[channel])
+        bad = banned_phrases(text)
+        if bad:   # a template edit slipped in an absolute claim — stop rather than embarrass Vocaris
+            results["blocked"] += 1
+            results["items"].append((lead["name"], "BLOCKED", f"banned phrase {bad}"))
+            continue
 
-        # A call list is a hand-off: the human records 'contacted' after dialling.
-        if live and channel != "call_list":
-            memory.record(market.id, "contacted", lead_id=lead["id"], channel=channel)
-        results["sent"] += 1
-        results["items"].append((lead["name"], "SENT" if live else "WOULD SEND", channel))
-
-    if call_rows:
-        out = DATA_DIR / f"call_list_{market.id}.csv"
-        with open(out, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=list(call_rows[0]))
-            w.writeheader()
-            w.writerows(call_rows)
-        results["file"] = str(out)
+        touch = len(immune.touches(lead["id"], memory)) + 1
+        day_dir.mkdir(parents=True, exist_ok=True)
+        path = day_dir / f"{lead['slug'] or lead['id'].replace(':', '_')}__{channel}.md"
+        to = {"email": lead["email"], "linkedin": "(find the owner/manager on LinkedIn)",
+              "whatsapp": lead["phone"], "call_list": lead["phone"]}[channel]
+        note = "\n> ⚠️ لمسة ٤ أو ٥ بلا رد — غيّر الزاوية، لا تكرّر نفس الرسالة.\n" if touch >= 4 else ""
+        path.write_text(
+            f"# {lead['name']} — {channel} — لمسة {touch}/5\n\n"
+            f"- **إلى:** {to}\n- **الرابط:** {lead['demo_link']}\n- **النقاط:** {lead['score']} ({lead['score_reasons']})\n"
+            f"- **بعد الإرسال:** `python3 -m organism.cli record {lead['id']} contacted --channel {channel}`\n"
+            f"{note}\n---\n\n{text}\n", encoding="utf-8")
+        memory.record(market.id, "drafted", lead_id=lead["id"], channel=channel, ts=now)
+        results["drafted"] += 1
+        results["files"].append(str(path))
+        results["items"].append((lead["name"], "DRAFTED", f"{channel} touch {touch}/5"))
     return results
 
 

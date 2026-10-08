@@ -3,10 +3,10 @@
 id: dubai
 name: Dubai
 country: AE
-status: active            # active | planned | paused
+status: active            # active | planned | paused — ⚠️ first market NOT yet confirmed by Ahmad (ICP.md)
 timezone: Asia/Dubai
 currency: AED
-languages: [en, ar]       # outreach copy is generated in this order
+languages: [ar, en]       # first = draft language; Gulf dialect for the Gulf (house rule #5)
 dialect: gulf
 phone_country_code: "+971"
 
@@ -43,9 +43,11 @@ scoring:
 # the organism never sends a link until `verify-links` has confirmed it returns 200.
 demo_link_template: "https://vocaris.ai/demo/{slug}"
 require_verified_demo: true
+daily_total_cap: 5          # house rule: max 5 messages/day across all channels
 
 offer:
-  trial: "30 days free, no card"      # matches live site copy ("Claim 30 days free")
+  trial: "1 month free, no card"      # fixed fact (CLAUDE.md); live site says "30 days free"
+  trial_ar: "شهر مجاني، بدون بطاقة"
   plans: {essentials_usd: 149, growth_usd: 299, premier_usd: 599, overage_usd_per_min: 2}
 
 # What the live product lacks for this market (from vocaris.ai audit, Oct 2026).
@@ -62,6 +64,9 @@ telephony:
 
 # Channel permissions. The immune system enforces these — outreach code never bypasses them.
 channels:
+  linkedin:                     # primary channel (fixed fact): DMs sent by hand
+    enabled: true
+    cold_allowed: true
   email:
     enabled: true
     cold_allowed: true          # B2B to generic business addresses, with sender identity + opt-out
@@ -80,5 +85,7 @@ channels:
     platforms: [instagram, tiktok]
     daily_budget_usd: 20
 
+# House goal: not 100 customers in 30 days — ONE real customer who actually forwarded their phone.
+# (Drive roadmap said 100 paying by month 3; kept here for reference only.)
 targets:
-  paying_customers_by_month_3: 100
+  paying_customers_by_month_3: 1
