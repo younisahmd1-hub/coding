@@ -16,7 +16,7 @@ All outputs to Ahmad are in Arabic and end with: what was done · decision neede
 | Riyadh | planned (months 7–9) | 0 | 0 | — |
 
 ## Blockers, most urgent first
-1. **SECURITY (critical):** the live vocaris.ai JavaScript exposes the production database password. The technical partner must rotate the Neon password and move secrets to the server. See RT-13.
+1. **SECURITY (critical):** an urgent security issue on the vocaris.ai site was reported privately to Ahmad and must be fixed by the technical partner. Details are kept out of this repository on purpose. See RT-13.
 2. **No leads yet.** Run `source` once a `GOOGLE_PLACES_API_KEY` is set, or import a CSV.
 3. **Demo links:** personal demo pages (`vocaris.ai/demo/<slug>`) are created by the Vocaris backend pipeline. Drafts only include links that are live AND that Ahmad has called himself.
 4. **Product gaps for the UAE:** no Arabic agent language, no WhatsApp, no Fresha, prices in USD only.
