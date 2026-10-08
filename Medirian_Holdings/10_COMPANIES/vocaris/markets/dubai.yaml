@@ -1,0 +1,84 @@
+# Market cell: Dubai, UAE
+# Every value here is a decision the organism reads at runtime. Change it here, not in code.
+id: dubai
+name: Dubai
+country: AE
+status: active            # active | planned | paused
+timezone: Asia/Dubai
+currency: AED
+languages: [en, ar]       # outreach copy is generated in this order
+dialect: gulf
+phone_country_code: "+971"
+
+# Where to hunt. Roadmap: Jumeirah + Dubai Marina first.
+districts:
+  - Jumeirah
+  - Dubai Marina
+  - JLT
+  - Business Bay
+  - Downtown Dubai
+  - Al Barsha
+  - Deira
+  - Al Quoz
+
+# Business types Vocaris serves, with a priority weight (1.0 = baseline).
+segments:
+  barber: {query: "barber shop", weight: 1.2}
+  salon: {query: "beauty salon", weight: 1.1}
+  nails: {query: "nail salon", weight: 1.0}
+  spa: {query: "spa", weight: 0.9}
+  clinic: {query: "aesthetic clinic", weight: 1.0}
+  dental: {query: "dental clinic", weight: 0.9}
+  pet_grooming: {query: "pet grooming", weight: 0.8}
+
+# Lead scoring thresholds (see organism/organs/scoring.py)
+scoring:
+  min_rating: 4.0
+  busy_review_count: 150     # reviews above this = high call volume
+  prefer_website: true       # roadmap: keep businesses with websites
+  booking_platforms_bonus: [fresha, booksy]   # integrations Vocaris already supports
+
+# Personalized demo page. Pattern confirmed from vocaris.ai: /demo/<slug>, backed by
+# GET {api}/public/outreach/demo/<slug>. Slugs are created by the Vocaris backend outreach pipeline —
+# the organism never sends a link until `verify-links` has confirmed it returns 200.
+demo_link_template: "https://vocaris.ai/demo/{slug}"
+require_verified_demo: true
+
+offer:
+  trial: "30 days free, no card"      # matches live site copy ("Claim 30 days free")
+  plans: {essentials_usd: 149, growth_usd: 299, premier_usd: 599, overage_usd_per_min: 2}
+
+# What the live product lacks for this market (from vocaris.ai audit, Oct 2026).
+# Outreach copy must not promise these until they ship.
+product_gaps:
+  - "Arabic not selectable as agent language (Gulf voices exist in catalog)"
+  - "No WhatsApp channel"
+  - "No Fresha integration (dominant UAE salon booking system)"
+  - "USD only — no AED pricing / VAT"
+
+telephony:
+  path: undecided            # A = IFZA free-zone company + local 04/05 numbers; B = WhatsApp-only via US entity
+  notes: "TDRA requires UAE trade licence for local DIDs."
+
+# Channel permissions. The immune system enforces these — outreach code never bypasses them.
+channels:
+  email:
+    enabled: true
+    cold_allowed: true          # B2B to generic business addresses, with sender identity + opt-out
+    daily_cap: 40               # warm-up cap per sending domain
+  whatsapp:
+    enabled: true
+    cold_allowed: false         # Meta policy: business-initiated messages need prior opt-in
+    daily_cap: 250
+  call_list:
+    enabled: true
+    cold_allowed: true          # human calls in business hours only
+    daily_cap: 60
+    call_hours: [10, 19]
+  ads:
+    enabled: true
+    platforms: [instagram, tiktok]
+    daily_budget_usd: 20
+
+targets:
+  paying_customers_by_month_3: 100

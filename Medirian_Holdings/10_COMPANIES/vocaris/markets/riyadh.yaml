@@ -1,0 +1,43 @@
+# Market cell: Riyadh, Saudi Arabia — PLANNED (roadmap months 7–9)
+id: riyadh
+name: Riyadh
+country: SA
+status: planned
+timezone: Asia/Riyadh
+currency: SAR
+languages: [ar, en]
+dialect: najdi
+phone_country_code: "+966"
+
+districts: [Olaya, Al Malqa, Al Nakheel, Hittin, Al Yasmin]
+
+segments:
+  barber: {query: "barber shop", weight: 1.2}
+  salon: {query: "beauty salon", weight: 1.1}
+  clinic: {query: "aesthetic clinic", weight: 1.0}
+  dental: {query: "dental clinic", weight: 0.9}
+
+scoring:
+  min_rating: 4.0
+  busy_review_count: 200
+  prefer_website: false
+  booking_platforms_bonus: [fresha, booksy]
+
+demo_link_template: "https://vocaris.ai/demo/{slug}"
+require_verified_demo: true
+
+offer:
+  trial: "30 days free, no card"
+  plans: {essentials_usd: 149, growth_usd: 299, premier_usd: 599}
+
+telephony:
+  path: undecided
+  notes: "Needs Saudi CPaaS provider + PDPL data localization review before launch."
+
+channels:
+  email: {enabled: true, cold_allowed: true, daily_cap: 40}
+  whatsapp: {enabled: true, cold_allowed: false, daily_cap: 250}
+  call_list: {enabled: true, cold_allowed: true, daily_cap: 60, call_hours: [10, 21]}
+  ads: {enabled: true, platforms: [tiktok, snapchat], daily_budget_usd: 0}
+
+targets: {}

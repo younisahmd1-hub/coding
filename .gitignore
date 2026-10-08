@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.env
+Medirian_Holdings/10_COMPANIES/vocaris/data/*
+!Medirian_Holdings/10_COMPANIES/vocaris/data/.gitkeep
