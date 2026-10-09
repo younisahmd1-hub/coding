@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""omni: talk to an OmniRoute gateway's OpenAI-compatible /v1 API.
+"""omni: talk to an OmniRoute gateway's OpenAI-compatible API (/api/v1).
 
 Usage:
   omni ping                          check the URL and key
@@ -9,7 +9,7 @@ Usage:
 Environment:
   OMNIROUTE_API_KEY   gateway API key (required; sent as a Bearer token)
   OMNIROUTE_URL       gateway URL, default https://omni.inamoriyama.com
-                      (a trailing /v1 is accepted and ignored)
+                      (a trailing /v1 or /api/v1 is accepted and ignored)
   OMNIROUTE_TIMEOUT   request timeout in seconds, default 120
 """
 
@@ -28,11 +28,15 @@ class OmniError(Exception):
 
 
 def api_base():
+    # OmniRoute serves its OpenAI-compatible API under /api/v1; the /v1 alias can sit
+    # behind a reverse proxy's own auth (as on omni.inamoriyama.com), so always use /api/v1.
     url = os.environ.get("OMNIROUTE_URL", "").strip() or DEFAULT_URL
     url = url.rstrip("/")
-    if url.endswith("/v1"):
-        url = url[: -len("/v1")]
-    return url + "/v1"
+    for suffix in ("/api/v1", "/v1"):
+        if url.endswith(suffix):
+            url = url[: -len(suffix)]
+            break
+    return url + "/api/v1"
 
 
 def request(method, path, body=None):
@@ -57,10 +61,13 @@ def request(method, path, body=None):
             detail = err.get("message", err) if isinstance(err, dict) else err
         except (ValueError, AttributeError):
             detail = " ".join(detail.split())[:300]
-        hint = " (check OMNIROUTE_API_KEY)" if e.code in (401, 403) else ""
+        hint = " (check OMNIROUTE_API_KEY)" if e.code == 401 else ""
         raise OmniError(f"HTTP {e.code} from {api_base()}{path}: {detail}{hint}")
     except urllib.error.URLError as e:
         raise OmniError(f"cannot reach {api_base()}: {e.reason}")
+    except (TimeoutError, OSError) as e:
+        raise OmniError(f"no answer from {api_base()}{path} within {timeout:g}s ({e}); "
+                        "try another model or raise OMNIROUTE_TIMEOUT")
 
 
 def list_models(filter_text=None):

@@ -2,6 +2,7 @@ import io
 import json
 import os
 import threading
+import time
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -37,7 +38,7 @@ class FakeGateway(BaseHTTPRequestHandler):
     def do_GET(self):
         if not self._authorized():
             return
-        if self.path == "/v1/models":
+        if self.path == "/api/v1/models":
             self._send(200, {"data": [{"id": "openai/gpt-5"}, {"id": "gemini/gemini-3-pro"}, {"id": "my-combo"}]})
         else:
             self._send(404, {"error": "not found"})
@@ -47,7 +48,9 @@ class FakeGateway(BaseHTTPRequestHandler):
             return
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         FakeGateway.last_body = body
-        if self.path == "/v1/chat/completions":
+        if body.get("model") == "slow":
+            time.sleep(1)
+        if self.path == "/api/v1/chat/completions":
             self._send(200, {
                 "model": body["model"],
                 "choices": [{"message": {"role": "assistant", "content": "echo: " + body["messages"][-1]["content"]}}],
@@ -78,9 +81,11 @@ class OmniTest(unittest.TestCase):
 
     def test_api_base_defaults_and_strips_v1(self):
         with mock.patch.dict(os.environ, {"OMNIROUTE_URL": ""}):
-            self.assertEqual(omni.api_base(), "https://omni.inamoriyama.com/v1")
+            self.assertEqual(omni.api_base(), "https://omni.inamoriyama.com/api/v1")
         with mock.patch.dict(os.environ, {"OMNIROUTE_URL": "https://gw.example/v1/"}):
-            self.assertEqual(omni.api_base(), "https://gw.example/v1")
+            self.assertEqual(omni.api_base(), "https://gw.example/api/v1")
+        with mock.patch.dict(os.environ, {"OMNIROUTE_URL": "https://gw.example/api/v1"}):
+            self.assertEqual(omni.api_base(), "https://gw.example/api/v1")
 
     def test_missing_key(self):
         code, _, err = self.run_cli(["models"], {"OMNIROUTE_URL": self.url})
@@ -118,6 +123,14 @@ class OmniTest(unittest.TestCase):
             code, out, _ = self.run_cli(["ask", "-m", "openai/gpt-5", "-"], env)
         self.assertEqual(code, 0)
         self.assertEqual(out.strip(), "echo: from stdin")
+
+    def test_timeout_is_a_clean_error(self):
+        env = {"OMNIROUTE_URL": self.url, "OMNIROUTE_API_KEY": KEY, "OMNIROUTE_TIMEOUT": "0.2"}
+        code, out, err = self.run_cli(["ask", "-m", "slow", "hi"], env)
+        self.assertEqual(code, 1)
+        self.assertEqual(out, "")
+        self.assertIn("no answer from", err)
+        self.assertIn("OMNIROUTE_TIMEOUT", err)
 
     def test_ping(self):
         code, out, _ = self.run_cli(["ping"], {"OMNIROUTE_URL": self.url, "OMNIROUTE_API_KEY": KEY})
