@@ -9,7 +9,7 @@ from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from unittest import mock
 
-omni = SourceFileLoader("omni", str(Path(__file__).resolve().parents[1] / "bin" / "omni")).load_module()
+omni = SourceFileLoader("omni", str(Path(__file__).resolve().parents[1] / "scripts" / "omni.py")).load_module()
 
 KEY = "test-key"
 
