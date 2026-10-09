@@ -11,3 +11,4 @@
 | C-007 | 10_COMPANIES/vocaris/organism/organs/scoring.py | Lead scoring with reasons |
 | C-008 | 10_COMPANIES/vocaris/organism/organs/personalize.py | Demo links, bilingual copy, link verification |
 | C-009 | 10_COMPANIES/vocaris/organism/organs/outreach.py | Email / WhatsApp / call list / ads plan |
+| C-010 | 20_PLUGINS/omniroute/bin/omni | OmniRoute /v1 CLI (ping, models, ask), used by the plugin skills |
