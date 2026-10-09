@@ -2,5 +2,6 @@
 
 | Date | Change |
 |---|---|
+| 2026-10-09 | Added Claude Code plugin `omniroute` (OmniRoute gateway: /omniroute:ask, /omniroute:models, MCP server) + `medirian` marketplace (7 tests) |
 | 2026-10-09 | Merged local Vocaris folder knowledge; outreach is drafts-only with 5/day cap, 14-day cadence, call-tested demos (14 tests) |
 | 2026-10-08 | Created UPRS skeleton + Vocaris growth organism v0.1 (11 tests passing) |
