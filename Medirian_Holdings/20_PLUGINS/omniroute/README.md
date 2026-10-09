@@ -6,7 +6,7 @@ Connects Claude Code to the OmniRoute AI gateway at `https://omni.inamoriyama.co
 |---|---|
 | `skills/ask` → `/omniroute:ask <model> <prompt>` | Send a prompt to any model or combo on the gateway (second opinions, comparisons). Claude can also use it on its own. |
 | `skills/models` → `/omniroute:models [filter]` | List the model ids the gateway exposes. |
-| `bin/omni` | Small Python CLI (standard library only) for the gateway's OpenAI-compatible `/v1` API. Claude Code puts it on the Bash PATH while the plugin is on. |
+| `bin/omni` → `scripts/omni.py` | Small Python CLI (standard library only) for the gateway's OpenAI-compatible `/v1` API. Claude Code puts `bin/` on the Bash PATH while the plugin is on; the `bin/omni` wrapper finds `python3`, `python` or the Windows `py` launcher. Needs Python 3.8+ (Windows: `winget install Python.Python.3.13`). |
 | `.mcp.json` → MCP server `omniroute` | The gateway's own MCP tools (health, combos, quotas, costs, routing, budget guard) over `/api/mcp/stream`. |
 
 ## Setup

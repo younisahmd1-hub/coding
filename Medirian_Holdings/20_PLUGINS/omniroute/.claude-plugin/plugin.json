@@ -1,7 +1,7 @@
 {
   "name": "omniroute",
   "displayName": "OmniRoute Gateway",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Use the OmniRoute AI gateway from Claude Code: ask any routed model for a second opinion, list models, and monitor or control the gateway through its MCP tools.",
   "author": { "name": "younisahmd1-hub" },
   "keywords": ["omniroute", "llm-gateway", "mcp", "multi-model"]
