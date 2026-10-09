@@ -50,6 +50,12 @@ class FakeGateway(BaseHTTPRequestHandler):
         FakeGateway.last_body = body
         if body.get("model") == "slow":
             time.sleep(1)
+        if body.get("model") == "dead-combo":
+            self._send(200, {"id": "x", "choices": [], "usage": {}})
+            return
+        if body.get("model") == "thinker":
+            self._send(200, {"choices": [{"message": {"content": ""}, "finish_reason": "length"}]})
+            return
         if self.path == "/api/v1/chat/completions":
             self._send(200, {
                 "model": body["model"],
@@ -131,6 +137,24 @@ class OmniTest(unittest.TestCase):
         self.assertEqual(out, "")
         self.assertIn("no answer from", err)
         self.assertIn("OMNIROUTE_TIMEOUT", err)
+
+    def test_default_model_and_override(self):
+        env = {"OMNIROUTE_URL": self.url, "OMNIROUTE_API_KEY": KEY}
+        code, _, err = self.run_cli(["ask", "hi"], env)
+        self.assertEqual(code, 0)
+        self.assertEqual(FakeGateway.last_body["model"], omni.DEFAULT_MODEL)
+        code, _, _ = self.run_cli(["ask", "hi"], {**env, "OMNIROUTE_MODEL": "my-combo"})
+        self.assertEqual(FakeGateway.last_body["model"], "my-combo")
+
+    def test_empty_answers_are_explained(self):
+        env = {"OMNIROUTE_URL": self.url, "OMNIROUTE_API_KEY": KEY}
+        code, _, err = self.run_cli(["ask", "-m", "dead-combo", "hi"], env)
+        self.assertEqual(code, 1)
+        self.assertIn("every provider behind it failed", err)
+        code, _, err = self.run_cli(["ask", "-m", "thinker", "hi"], env)
+        self.assertEqual(code, 1)
+        self.assertIn("finish_reason=length", err)
+        self.assertIn("raise --max-tokens", err)
 
     def test_ping(self):
         code, out, _ = self.run_cli(["ping"], {"OMNIROUTE_URL": self.url, "OMNIROUTE_API_KEY": KEY})

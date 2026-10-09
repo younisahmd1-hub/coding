@@ -4,13 +4,14 @@
 Usage:
   omni ping                          check the URL and key
   omni models [--filter TEXT]        list model ids the gateway exposes
-  omni ask -m MODEL [-s SYSTEM] [--max-tokens N] PROMPT   (PROMPT "-" reads stdin)
+  omni ask [-m MODEL] [-s SYSTEM] [--max-tokens N] PROMPT   (PROMPT "-" reads stdin)
 
 Environment:
   OMNIROUTE_API_KEY   gateway API key (required; sent as a Bearer token)
   OMNIROUTE_URL       gateway URL, default https://omni.inamoriyama.com
                       (a trailing /v1 or /api/v1 is accepted and ignored)
   OMNIROUTE_TIMEOUT   request timeout in seconds, default 120
+  OMNIROUTE_MODEL     model used when -m is not given, default claude/claude-sonnet-4-6
 """
 
 import argparse
@@ -21,6 +22,7 @@ import urllib.error
 import urllib.request
 
 DEFAULT_URL = "https://omni.inamoriyama.com"
+DEFAULT_MODEL = "claude/claude-sonnet-4-6"
 
 
 class OmniError(Exception):
@@ -88,8 +90,13 @@ def ask(model, prompt, system=None, max_tokens=None):
     resp = request("POST", "/chat/completions", body)
     choices = resp.get("choices") or []
     if not choices:
-        raise OmniError("gateway returned no choices: " + json.dumps(resp)[:300])
+        raise OmniError(f"empty answer from {model}: the gateway returned no choices, which usually "
+                        "means every provider behind it failed; try another model")
     content = choices[0].get("message", {}).get("content") or ""
+    if not content.strip():
+        reason = choices[0].get("finish_reason") or "unknown"
+        hint = "; raise --max-tokens" if reason == "length" else ""
+        raise OmniError(f"{model} returned an empty message (finish_reason={reason}){hint}")
     return content, resp.get("model", model), resp.get("usage") or {}
 
 
@@ -100,7 +107,8 @@ def main(argv=None):
     p_models = sub.add_parser("models", help="list model ids")
     p_models.add_argument("--filter", help="case-insensitive substring filter")
     p_ask = sub.add_parser("ask", help="send one prompt to a model")
-    p_ask.add_argument("-m", "--model", required=True, help="model id or combo name")
+    p_ask.add_argument("-m", "--model", help="model id or combo name (default: $OMNIROUTE_MODEL or "
+                       + DEFAULT_MODEL + ")")
     p_ask.add_argument("-s", "--system", help="system prompt")
     p_ask.add_argument("--max-tokens", type=int)
     p_ask.add_argument("prompt", help='prompt text, or "-" to read stdin')
@@ -116,7 +124,8 @@ def main(argv=None):
             prompt = sys.stdin.read() if args.prompt == "-" else args.prompt
             if not prompt.strip():
                 raise OmniError("empty prompt")
-            content, model, usage = ask(args.model, prompt, args.system, args.max_tokens)
+            model = args.model or os.environ.get("OMNIROUTE_MODEL", "").strip() or DEFAULT_MODEL
+            content, model, usage = ask(model, prompt, args.system, args.max_tokens)
             print(content)
             tokens = ", ".join(f"{k}={v}" for k, v in usage.items() if isinstance(v, int))
             print(f"[model: {model}{'; ' + tokens if tokens else ''}]", file=sys.stderr)
