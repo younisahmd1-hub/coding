@@ -6,13 +6,13 @@ Connects Claude Code to the OmniRoute AI gateway at `https://omni.inamoriyama.co
 |---|---|
 | `skills/ask` → `/omniroute:ask <model> <prompt>` | Send a prompt to any model or combo on the gateway (second opinions, comparisons). Claude can also use it on its own. |
 | `skills/models` → `/omniroute:models [filter]` | List the model ids the gateway exposes. |
-| `bin/omni` → `scripts/omni.py` | Small Python CLI (standard library only) for the gateway's OpenAI-compatible `/v1` API. Claude Code puts `bin/` on the Bash PATH while the plugin is on; the `bin/omni` wrapper finds `python3`, `python` or the Windows `py` launcher. Needs Python 3.8+ (Windows: `winget install Python.Python.3.13`). |
+| `bin/omni` → `scripts/omni.py` | Small Python CLI (standard library only) for the gateway's OpenAI-compatible API at `/api/v1` (the `/v1` alias on omni.inamoriyama.com sits behind nginx's own login, so the plugin doesn't use it). Claude Code puts `bin/` on the Bash PATH while the plugin is on; the `bin/omni` wrapper finds `python3`, `python` or the Windows `py` launcher. Needs Python 3.8+ (Windows: `winget install Python.Python.3.13`). |
 | `.mcp.json` → MCP server `omniroute` | The gateway's own MCP tools (health, combos, quotas, costs, routing, budget guard) over `/api/mcp/stream`. |
 
 ## Setup
 
 1. **Create an API key** in the OmniRoute dashboard → API Manager. For the MCP tools the key needs the `mcp:connect` scope (or `manage`).
-2. **Give Claude Code the key.** Export it in the shell that starts Claude Code:
+2. **Give Claude Code the key.** On Windows: `setx OMNIROUTE_API_KEY "<your key>"`, then open a new terminal. On macOS/Linux, export it in the shell that starts Claude Code:
 
    ```bash
    export OMNIROUTE_API_KEY="<your key>"
@@ -21,7 +21,7 @@ Connects Claude Code to the OmniRoute AI gateway at `https://omni.inamoriyama.co
    ```
 
    Never commit the key to this repository.
-3. **Turn on the MCP transport** (only for the MCP tools): OmniRoute dashboard → Settings → MCP transport → `streamable-http`. The gateway currently answers *"MCP transport is set to stdio"*, so the `omniroute` MCP server will show as failed in `/mcp` until this is changed. The `omni` CLI and both skills work without it.
+3. **Turn on the MCP transport** (only for the MCP tools): OmniRoute dashboard → Settings → MCP transport → `streamable-http`. Without it, the `omniroute` MCP server shows as failed in `/mcp`; the `omni` CLI and both skills work either way.
 4. **Install the plugin** from inside Claude Code:
 
    ```
