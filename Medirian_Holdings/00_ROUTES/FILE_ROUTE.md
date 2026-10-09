@@ -12,3 +12,5 @@
 | F-009 | 10_COMPANIES/vocaris/SYNC_STATE.md | Last sync with claude.ai chats |
 | F-010 | 10_COMPANIES/vocaris/outbox/ | Drafts for Ahmad to send by hand (gitignored) |
 | F-005 | 10_COMPANIES/vocaris/data/ | Runtime data (gitignored: SQLite memory, call lists, kill switch) |
+| F-011 | 20_PLUGINS/omniroute/ | Claude Code plugin for the OmniRoute gateway (manifest, .mcp.json, skills, README) |
+| F-012 | ../.claude-plugin/marketplace.json | Plugin marketplace `medirian` (repo root) |

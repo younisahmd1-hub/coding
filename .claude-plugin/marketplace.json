@@ -1,0 +1,12 @@
+{
+  "name": "medirian",
+  "description": "Claude Code plugins for Medirian Holdings",
+  "owner": { "name": "younisahmd1-hub" },
+  "plugins": [
+    {
+      "name": "omniroute",
+      "source": "./Medirian_Holdings/20_PLUGINS/omniroute",
+      "description": "Use the OmniRoute AI gateway (omni.inamoriyama.com) from Claude Code: ask other models, list models, and manage the gateway over MCP."
+    }
+  ]
+}
