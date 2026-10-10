@@ -2,6 +2,8 @@
 
 All lookups start here. Read `CURRENT_STATE.md` first, then only the routes the task needs.
 
+Group-wide index (since 2026-10-10): `claude/brain/BRAIN_MAP_AR.md` in the claude.ai project «The main manager» maps every RT id across both houses. The routes below are the Vocaris copies; the project's `claude/routes/` copies (same ids, e.g. RT-02, RT-22) belong to Meridian.
+
 | ID | Route | Status |
 |---|---|---|
 | RT-01 | [FILE_ROUTE](00_ROUTES/FILE_ROUTE.md) | active |
