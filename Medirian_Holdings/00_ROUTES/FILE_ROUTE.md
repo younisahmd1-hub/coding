@@ -14,3 +14,6 @@
 | F-005 | 10_COMPANIES/vocaris/data/ | Runtime data (gitignored: SQLite memory, call lists, kill switch) |
 | F-011 | 20_PLUGINS/omniroute/ | Claude Code plugin for the OmniRoute gateway (manifest, .mcp.json, skills, README) |
 | F-012 | ../.claude-plugin/marketplace.json | Plugin marketplace `medirian` (repo root) |
+| F-013 | 30_GOVERNANCE/COUNCIL.md | R26 island councils: seats, vote rule, red lines, owner seal/veto |
+| F-014 | 30_GOVERNANCE/COUNCIL_CLERK_PROMPT.md | Exact prompt of the on-demand council clerk routine |
+| F-015 | 30_GOVERNANCE/village_council.js | Reference copy of the council code published in the village page |

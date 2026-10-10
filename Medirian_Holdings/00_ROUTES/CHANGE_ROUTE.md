@@ -2,6 +2,7 @@
 
 | Date | Change |
 |---|---|
+| 2026-10-10 | R26 island councils: governor + opposition party «حزب الميزان» (3 per island, 42 seats) + chief inspector vote; majority 3/5 with inspector executes via on-demand clerk routine into Meridian Command; red lines go to owner seal; owner veto. Village page v53, rule R26 added to Meridian Command |
 | 2026-10-09 | omniroute plugin 0.1.3: default model (claude/claude-sonnet-4-6, answers live), clear empty-answer errors, ask skill falls back to the default |
 | 2026-10-09 | omniroute plugin 0.1.2: CLI uses /api/v1 (nginx guards /v1), clean timeout errors; verified live: 989 models listed, MCP initialize OK |
 | 2026-10-09 | omniroute plugin 0.1.1: `bin/omni` wrapper finds python/py so the CLI works on Windows |

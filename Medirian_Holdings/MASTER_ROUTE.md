@@ -27,4 +27,4 @@ All lookups start here. Read `CURRENT_STATE.md` first, then only the routes the 
 | RT-21 | [METRIC_KPI_ROUTE](00_ROUTES/METRIC_KPI_ROUTE.md) | active |
 | RT-22 | [NICHE_INTEL_ROUTE](00_ROUTES/NICHE_INTEL_ROUTE.md) | active |
 | RT-23 | [DOCUMENTATION_ROUTE](00_ROUTES/DOCUMENTATION_ROUTE.md) | empty |
-| RT-24 | [PROMPT_DNA_ROUTE](00_ROUTES/PROMPT_DNA_ROUTE.md) | empty |
+| RT-24 | [PROMPT_DNA_ROUTE](00_ROUTES/PROMPT_DNA_ROUTE.md) | active |

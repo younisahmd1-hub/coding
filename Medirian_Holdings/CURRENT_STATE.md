@@ -1,6 +1,6 @@
 # CURRENT STATE — Medirian Holdings
 
-_Last updated: 2026-10-09_
+_Last updated: 2026-10-10_
 
 ## Read first for Vocaris
 `10_COMPANIES/vocaris/CLAUDE.md` (house rules, in Arabic) → `VOCARIS_MASTER_KNOWLEDGE.md` → `PROGRESS_LOG.md`.
@@ -8,6 +8,9 @@ All outputs to Ahmad are in Arabic and end with: what was done · decision neede
 
 ## Active focus
 **Vocaris worldwide growth organism**, at `10_COMPANIES/vocaris/`. Version 0.2 follows the house rules in CLAUDE.md (drafts only, 5 a day, call-tested demos); 14 tests pass. It has not been given real leads yet.
+
+## Governance (R26, new 2026-10-10)
+Every island in «قرية ميريديان» has a council: governor + 3 opposition members («حزب الميزان») + chief inspector. A pending decision passes with 3 of 5 including the inspector, and the on-demand clerk routine writes it into Meridian Command. Red lines (money, publishing, outside contact, secrets, live trading, freeze, scheduled tasks, constitution, deletion, Vocaris product, owner-only facts) wait for the owner's seal. The owner can veto. The owner freeze still holds: council orders are written but frozen seats are not woken. See `30_GOVERNANCE/COUNCIL.md`.
 
 ## Tooling
 **Claude Code plugin `omniroute`** at `20_PLUGINS/omniroute/` (install: `/plugin marketplace add younisahmd1-hub/coding`, then `/plugin install omniroute@medirian`). Needs `OMNIROUTE_API_KEY`; MCP tools also need the gateway's MCP transport set to streamable-http.
